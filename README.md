@@ -9,6 +9,9 @@
 vault auth enable userpass
  
 vault write auth/userpass/users/alice password="passw0rd" policies="administrator-policy"
+
+vault write auth/userpass/users/bob password="passw0rd" policies="team-a-policy"
+ 
 ```
 
 ### Mount Vault SSH Certificate Secret Engine and Generate SSH CA Key Pair
@@ -17,6 +20,8 @@ vault secrets enable -path=ssh-client-signer ssh
  
 vault write ssh-client-signer/config/ca generate_signing_key=true
 ```
+# Vault Policy and Roles Workflow
+![WORK FLOW!](vault-workflow.webp)
 
 ### Create Vault Roles for signing client SSH keys
 ```
@@ -34,6 +39,22 @@ vault write ssh-client-signer/roles/administrator-role -<<"EOH"
   "ttl": "30m0s"
 }
 EOH
+
+vault write ssh-client-signer/roles/team-a-role -<<EOH
+{
+ "allow_user_certificates": true,
+ "allowed_users": "team-a",
+ "allowed_extensions": "",
+ "default_extensions": [
+ {
+ "permit-pty": ""
+ }
+ ],
+ "key_type": "ca",
+ "default_user": "team-a",
+ "ttl": "30m0s"
+}
+EOH
 ```
 
 ### Create Vault Policies
@@ -43,6 +64,15 @@ path "ssh-client-signer/roles/*" {
  capabilities = ["list"]
 }
 path "ssh-client-signer/sign/administrator-role" {
+ capabilities = ["create","update"]
+}
+EOF
+
+vault policy write team-a-policy  -<<EOF
+path "ssh-client-signer/roles/*" {
+ capabilities = ["list"]
+}
+path "ssh-client-signer/sign/team-a-role" {
  capabilities = ["create","update"]
 }
 EOF
@@ -105,3 +135,7 @@ ssh-keygen -Lf ~/.ssh/alice-signed-key.pub
 ```
 ssh -i ~/.ssh/alice-signed-key.pub -i ~/.ssh/alice-key admin@192.168.1.10 "whoami"
 ```
+
+
+
+
