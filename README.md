@@ -103,5 +103,5 @@ ssh-keygen -Lf ~/.ssh/alice-signed-key.pub
 
 ### Login with SSH Certificate
 ```
-ssh -i ~/.ssh/alice-signed-key.pub admin@server "whoami"
+ssh -i ~/.ssh/alice-signed-key.pub -i ~/.ssh/alice-key admin@192.168.1.10 "whoami"
 ```
